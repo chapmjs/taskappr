@@ -1,4 +1,4 @@
-# v45
+# v47 
 # Simple Task App in R Shiny with MySQL Backend
 # File: app.R
 
@@ -193,6 +193,7 @@ ui <- dashboardPage(
   dashboardHeader(title = "Simple Task Manager"),
   
   dashboardSidebar(
+    collapsed = TRUE,  # Start with sidebar collapsed
     sidebarMenu(
       menuItem("Tasks", tabName = "tasks", icon = icon("tasks")),
       menuItem("Add Task", tabName = "add_task", icon = icon("plus"))
@@ -314,12 +315,12 @@ server <- function(input, output, session) {
       df$category_name <- names(CATEGORIES)[match(df$category, CATEGORIES)]
       df$created_at <- format(as.POSIXct(df$created_at), "%Y-%m-%d %H:%M")
       
-      # Truncate text fields to 25 characters
+      # Truncate text fields to 35 characters
       df$subject_display <- ifelse(nchar(df$subject) > 35, 
                                    paste0(substr(df$subject, 1, 35), "..."), 
                                    df$subject)
       
-      df$notes_display <- ifelse(!is.na(df$notes) & nchar(df$notes) > 30, 
+      df$notes_display <- ifelse(!is.na(df$notes) & nchar(df$notes) > 35, 
                                  paste0(substr(df$notes, 1, 35), "..."), 
                                  ifelse(is.na(df$notes), "", df$notes))
       
@@ -345,7 +346,7 @@ server <- function(input, output, session) {
                       ),
                       columnDefs = list(
                         list(width = "50px", targets = 0),    # ID column - narrow
-                        list(width = "300px", targets = 1),   # Subject column - wider
+                        list(width = "200px", targets = 1),   # Subject column - wider
                         list(width = "120px", targets = 2),   # Category column
                         list(width = "80px", targets = 3),    # Status column
                         list(width = "120px", targets = 4),   # Created column
