@@ -263,18 +263,42 @@ server <- function(input, output, session) {
       df$category_name <- names(CATEGORIES)[match(df$category, CATEGORIES)]
       df$created_at <- format(as.POSIXct(df$created_at), "%Y-%m-%d %H:%M")
       
-      display_df <- df[, c("id", "subject", "category_name", "status", "created_at", "notes")]
+      # Truncate text fields to 25 characters
+      df$subject_display <- ifelse(nchar(df$subject) > 25, 
+                                   paste0(substr(df$subject, 1, 25), "..."), 
+                                   df$subject)
+      
+      df$notes_display <- ifelse(!is.na(df$notes) & nchar(df$notes) > 25, 
+                                 paste0(substr(df$notes, 1, 25), "..."), 
+                                 ifelse(is.na(df$notes), "", df$notes))
+      
+      display_df <- df[, c("id", "subject_display", "category_name", "status", "created_at", "notes_display")]
       names(display_df) <- c("ID", "Subject", "Category", "Status", "Created", "Notes")
       
       DT::datatable(display_df, 
                     selection = "single",
-                    options = list(pageLength = 10, scrollX = TRUE),
+                    filter = "top",
+                    options = list(
+                      pageLength = 10, 
+                      scrollX = TRUE,
+                      search = list(regex = FALSE, caseInsensitive = TRUE),
+                      searchHighlight = TRUE,
+                      dom = 'Bfrtip',
+                      language = list(
+                        search = "Search tasks:",
+                        searchPlaceholder = "Enter search term..."
+                      )
+                    ),
                     rownames = FALSE)
     } else {
       DT::datatable(data.frame(Message = "No tasks found"), 
-                    options = list(dom = 't'), rownames = FALSE)
+                    options = list(
+                      dom = 't',
+                      search = list(regex = FALSE, caseInsensitive = TRUE)
+                    ), 
+                    rownames = FALSE)
     }
-  })
+  }, server = FALSE)
   
   # Handle row selection for editing
   observeEvent(input$edit_task_btn, {
