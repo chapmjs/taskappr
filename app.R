@@ -147,42 +147,12 @@ ui <- dashboardPage(
           )
         ),
         
-        # Modal for editing tasks
-        bsModal("edit_modal", "Edit Task", "edit_btn", size = "large",
-          fluidRow(
-            column(6,
-              textInput("edit_subject", "Task Subject:", value = "")
-            ),
-            column(3,
-              selectInput("edit_category", "Category:", 
-                         choices = CATEGORIES, selected = 1)
-            ),
-            column(3,
-              selectInput("edit_status", "Status:", 
-                         choices = STATUS_OPTIONS, selected = "Idea")
-            )
-          ),
-          
-          h4("Notes:"),
-          DT::dataTableOutput("task_notes_table"),
-          br(),
-          
-          fluidRow(
-            column(10,
-              textAreaInput("new_note", "Add New Note:", value = "", 
-                           placeholder = "Enter a new note...", rows = 3)
-            ),
-            column(2,
-              br(),
-              actionButton("add_note_btn", "Add Note", 
-                          class = "btn-success", style = "margin-top: 5px;")
-            )
-          ),
-          
-          br(),
-          div(style = "text-align: right;",
-            actionButton("save_task_btn", "Save Changes", class = "btn-primary"),
-            actionButton("delete_task_btn", "Delete Task", class = "btn-danger")
+        # Edit task button
+        fluidRow(
+          column(12,
+            br(),
+            actionButton("edit_task_btn", "Edit Selected Task", 
+                        class = "btn-info", style = "margin-bottom: 10px;")
           )
         )
       ),
@@ -265,29 +235,66 @@ server <- function(input, output, session) {
   })
   
   # Handle row selection for editing
-  observeEvent(input$tasks_table_rows_selected, {
-    if (length(input$tasks_table_rows_selected) > 0) {
-      selected_row <- input$tasks_table_rows_selected
-      task_data <- tasks_data()[selected_row, ]
-      
-      current_task_id(task_data$id)
-      
-      # Populate edit form
-      updateTextInput(session, "edit_subject", value = task_data$subject)
-      updateSelectInput(session, "edit_category", selected = task_data$category)
-      updateSelectInput(session, "edit_status", selected = task_data$status)
-      
-      # Load notes for this task
-      tryCatch({
-        notes <- get_task_notes(task_data$id)
-        task_notes_data(notes)
-      }, error = function(e) {
-        showNotification(paste("Error loading notes:", e$message), type = "error")
-      })
-      
-      # Show modal
-      toggleModal(session, "edit_modal", toggle = "open")
+  observeEvent(input$edit_task_btn, {
+    if (length(input$tasks_table_rows_selected) == 0) {
+      showNotification("Please select a task to edit!", type = "warning")
+      return()
     }
+    
+    selected_row <- input$tasks_table_rows_selected
+    task_data <- tasks_data()[selected_row, ]
+    
+    current_task_id(task_data$id)
+    
+    # Load notes for this task
+    tryCatch({
+      notes <- get_task_notes(task_data$id)
+      task_notes_data(notes)
+    }, error = function(e) {
+      showNotification(paste("Error loading notes:", e$message), type = "error")
+    })
+    
+    # Show modal with task data
+    showModal(modalDialog(
+      title = "Edit Task",
+      size = "l",
+      
+      fluidRow(
+        column(6,
+          textInput("edit_subject", "Task Subject:", value = task_data$subject)
+        ),
+        column(3,
+          selectInput("edit_category", "Category:", 
+                     choices = CATEGORIES, selected = task_data$category)
+        ),
+        column(3,
+          selectInput("edit_status", "Status:", 
+                     choices = STATUS_OPTIONS, selected = task_data$status)
+        )
+      ),
+      
+      h4("Notes:"),
+      DT::dataTableOutput("task_notes_table"),
+      br(),
+      
+      fluidRow(
+        column(10,
+          textAreaInput("new_note", "Add New Note:", value = "", 
+                       placeholder = "Enter a new note...", rows = 3)
+        ),
+        column(2,
+          br(),
+          actionButton("add_note_btn", "Add Note", 
+                      class = "btn-success", style = "margin-top: 5px;")
+        )
+      ),
+      
+      footer = tagList(
+        actionButton("save_task_btn", "Save Changes", class = "btn-primary"),
+        actionButton("delete_task_btn", "Delete Task", class = "btn-danger"),
+        modalButton("Cancel")
+      )
+    ))
   })
   
   # Task notes table
@@ -367,7 +374,7 @@ server <- function(input, output, session) {
       # Refresh tasks
       tasks_data(get_tasks())
       
-      toggleModal(session, "edit_modal", toggle = "close")
+      removeModal()
       showNotification("Task updated successfully!", type = "success")
     }, error = function(e) {
       showNotification(paste("Error updating task:", e$message), type = "error")
@@ -396,7 +403,6 @@ server <- function(input, output, session) {
       tasks_data(get_tasks())
       
       removeModal()
-      toggleModal(session, "edit_modal", toggle = "close")
       showNotification("Task deleted successfully!", type = "success")
     }, error = function(e) {
       showNotification(paste("Error deleting task:", e$message), type = "error")
