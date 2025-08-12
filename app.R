@@ -11,10 +11,10 @@ library(lubridate)
 
 # Database configuration
 # Try to get from environment variables first, then fall back to defaults
-DB_HOST <- Sys.getenv("DB_HOST", default = "your_host")
-DB_NAME <- Sys.getenv("DB_NAME", default = "your_database")
-DB_USER <- Sys.getenv("DB_USER", default = "your_username")  # Replace with your MySQL username
-DB_PASS <- Sys.getenv("DB_PASS", default = "your_password")  # Replace with your MySQL password
+DB_HOST <- Sys.getenv("DB_HOST")
+DB_NAME <- Sys.getenv("DB_NAME")
+DB_USER <- Sys.getenv("DB_USER")  # Replace with your MySQL username
+DB_PASS <- Sys.getenv("DB_PASS")  # Replace with your MySQL password
 
 # Check if credentials are still default values
 if (DB_USER == "your_username" || DB_PASS == "your_password") {
