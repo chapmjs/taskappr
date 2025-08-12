@@ -86,17 +86,23 @@ insert_task <- function(subject, category, status, note = NULL) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
+  # Escape single quotes in the subject
+  escaped_subject <- gsub("'", "''", subject)
+  
   # Insert task
-  task_query <- "INSERT INTO tasks (subject, category, status) VALUES (?, ?, ?)"
-  dbExecute(conn, task_query, params = list(subject, category, status))
+  task_query <- paste0("INSERT INTO tasks (subject, category, status) VALUES ('", 
+                       escaped_subject, "', ", category, ", '", status, "')")
+  dbExecute(conn, task_query)
   
   # Get the inserted task ID
   task_id <- dbGetQuery(conn, "SELECT LAST_INSERT_ID() as id")$id
   
   # Insert note if provided
   if (!is.null(note) && nchar(trimws(note)) > 0) {
-    note_query <- "INSERT INTO task_notes (task_id, note) VALUES (?, ?)"
-    dbExecute(conn, note_query, params = list(task_id, note))
+    escaped_note <- gsub("'", "''", note)
+    note_query <- paste0("INSERT INTO task_notes (task_id, note) VALUES (", 
+                         task_id, ", '", escaped_note, "')")
+    dbExecute(conn, note_query)
   }
   
   return(task_id)
@@ -106,8 +112,13 @@ update_task <- function(id, subject, category, status) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "UPDATE tasks SET subject = ?, category = ?, status = ? WHERE id = ?"
-  dbExecute(conn, query, params = list(subject, category, status, id))
+  # Escape single quotes in the subject
+  escaped_subject <- gsub("'", "''", subject)
+  
+  query <- paste0("UPDATE tasks SET subject = '", escaped_subject, 
+                  "', category = ", category, ", status = '", status, 
+                  "' WHERE id = ", id)
+  dbExecute(conn, query)
 }
 
 delete_task <- function(id) {
@@ -115,18 +126,18 @@ delete_task <- function(id) {
   on.exit(dbDisconnect(conn))
   
   # Delete notes first (foreign key constraint)
-  dbExecute(conn, "DELETE FROM task_notes WHERE task_id = ?", params = list(id))
+  dbExecute(conn, paste0("DELETE FROM task_notes WHERE task_id = ", id))
   
   # Delete task
-  dbExecute(conn, "DELETE FROM tasks WHERE id = ?", params = list(id))
+  dbExecute(conn, paste0("DELETE FROM tasks WHERE id = ", id))
 }
 
 get_task_notes <- function(task_id) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "SELECT id, note, created_at FROM task_notes WHERE task_id = ? ORDER BY created_at DESC"
-  result <- dbGetQuery(conn, query, params = list(task_id))
+  query <- paste0("SELECT id, note, created_at FROM task_notes WHERE task_id = ", task_id, " ORDER BY created_at DESC")
+  result <- dbGetQuery(conn, query)
   return(result)
 }
 
@@ -134,16 +145,18 @@ add_note <- function(task_id, note) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "INSERT INTO task_notes (task_id, note) VALUES (?, ?)"
-  dbExecute(conn, query, params = list(task_id, note))
+  # Escape single quotes in the note
+  escaped_note <- gsub("'", "''", note)
+  query <- paste0("INSERT INTO task_notes (task_id, note) VALUES (", task_id, ", '", escaped_note, "')")
+  dbExecute(conn, query)
 }
 
 delete_note <- function(note_id) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "DELETE FROM task_notes WHERE id = ?"
-  dbExecute(conn, query, params = list(note_id))
+  query <- paste0("DELETE FROM task_notes WHERE id = ", note_id)
+  dbExecute(conn, query)
 }
 
 # UI
