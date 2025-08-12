@@ -1,6 +1,6 @@
+# v45
 # Simple Task App in R Shiny with MySQL Backend
 # File: app.R
-# version 38
 
 library(shiny)
 library(shinydashboard)
@@ -71,20 +71,28 @@ get_db_connection <- function() {
 }
 
 # CRUD Functions
-get_tasks <- function() {
+get_tasks <- function(status_filter = "Open") {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "
+  # Build the WHERE clause based on filter
+  where_clause <- if (status_filter == "All") {
+    ""
+  } else {
+    paste0("WHERE t.status = '", status_filter, "'")
+  }
+  
+  query <- paste0("
     SELECT t.id, t.subject, t.category, t.status, 
            DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i:%s') as created_at,
            DATE_FORMAT(t.updated_at, '%Y-%m-%d %H:%i:%s') as updated_at,
            GROUP_CONCAT(n.note SEPARATOR ' | ') as notes
     FROM tasks t
     LEFT JOIN task_notes n ON t.id = n.task_id
+    ", where_clause, "
     GROUP BY t.id, t.subject, t.category, t.status, t.created_at, t.updated_at
     ORDER BY t.category ASC, t.created_at DESC
-  "
+  ")
   
   result <- dbGetQuery(conn, query)
   
@@ -206,16 +214,26 @@ ui <- dashboardPage(
         fluidRow(
           box(
             title = "All Tasks", status = "primary", solidHeader = TRUE, width = 12,
+            
+            # Status filter control
+            fluidRow(
+              column(3,
+                selectInput("status_filter", "Show Tasks:", 
+                           choices = c("Open" = "Open", 
+                                     "Idea" = "Idea", 
+                                     "Closed" = "Closed", 
+                                     "All" = "All"), 
+                           selected = "Open")
+              ),
+              column(9,
+                # Edit task button
+                br(),
+                actionButton("edit_task_btn", "Edit Selected Task", 
+                            class = "btn-info", style = "margin-bottom: 10px;")
+              )
+            ),
+            
             DT::dataTableOutput("tasks_table")
-          )
-        ),
-        
-        # Edit task button
-        fluidRow(
-          column(12,
-            br(),
-            actionButton("edit_task_btn", "Edit Selected Task", 
-                        class = "btn-info", style = "margin-bottom: 10px;")
           )
         )
       ),
@@ -273,9 +291,18 @@ server <- function(input, output, session) {
   # Load tasks on startup
   observe({
     tryCatch({
-      tasks_data(get_tasks())
+      tasks_data(get_tasks("Open"))  # Default to Open tasks
     }, error = function(e) {
       showNotification(paste("Error loading tasks:", e$message), type = "error")
+    })
+  })
+  
+  # Handle status filter changes
+  observeEvent(input$status_filter, {
+    tryCatch({
+      tasks_data(get_tasks(input$status_filter))
+    }, error = function(e) {
+      showNotification(paste("Error filtering tasks:", e$message), type = "error")
     })
   })
   
@@ -455,7 +482,7 @@ server <- function(input, output, session) {
       updateSelectInput(session, "status", selected = "Idea")
       
       # Refresh tasks
-      tasks_data(get_tasks())
+      tasks_data(get_tasks(input$status_filter))
       
       showNotification("Task added successfully!", type = "message")
     }, error = function(e) {
@@ -496,7 +523,7 @@ server <- function(input, output, session) {
                   input$edit_category, input$edit_status)
       
       # Refresh tasks
-      tasks_data(get_tasks())
+      tasks_data(get_tasks(input$status_filter))
       
       removeModal()
       showNotification("Task updated successfully!", type = "message")
@@ -524,7 +551,7 @@ server <- function(input, output, session) {
       delete_task(current_task_id())
       
       # Refresh tasks
-      tasks_data(get_tasks())
+      tasks_data(get_tasks(input$status_filter))
       
       removeModal()
       showNotification("Task deleted successfully!", type = "message")
