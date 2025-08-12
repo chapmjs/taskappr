@@ -9,6 +9,18 @@ library(DBI)
 library(shinyWidgets)
 library(lubridate)
 
+# Database configuration
+# Try to get from environment variables first, then fall back to defaults
+DB_HOST <- Sys.getenv("DB_HOST", default = "your_host")
+DB_NAME <- Sys.getenv("DB_NAME", default = "your_database")
+DB_USER <- Sys.getenv("DB_USER", default = "your_username")  # Replace with your MySQL username
+DB_PASS <- Sys.getenv("DB_PASS", default = "your_password")  # Replace with your MySQL password
+
+# Check if credentials are still default values
+if (DB_USER == "your_username" || DB_PASS == "your_password") {
+  warning("Database credentials not properly configured. Please set DB_USER and DB_PASS environment variables or update the code directly.")
+}
+
 # Category mapping
 CATEGORIES <- c(
   "1 - Relationship with God" = 1,
@@ -25,12 +37,22 @@ STATUS_OPTIONS <- c("Idea", "Open", "Closed")
 # Database connection function
 get_db_connection <- function() {
   tryCatch({
-    dbConnect(MySQL(),
-              host = DB_HOST,
-              dbname = DB_NAME,
-              user = DB_USER,
-              password = DB_PASS)
+    # Debug info
+    cat("Attempting to connect to database:\n")
+    cat("Host:", DB_HOST, "\n")
+    cat("Database:", DB_NAME, "\n")
+    cat("User:", DB_USER, "\n")
+    
+    conn <- dbConnect(MySQL(),
+                      host = DB_HOST,
+                      dbname = DB_NAME,
+                      user = DB_USER,
+                      password = DB_PASS)
+    
+    cat("Database connection successful!\n")
+    return(conn)
   }, error = function(e) {
+    cat("Database connection error:", e$message, "\n")
     stop("Database connection failed: ", e$message)
   })
 }
