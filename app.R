@@ -299,13 +299,24 @@ server <- function(input, output, session) {
                     filter = "top",
                     options = list(
                       pageLength = 10, 
+                      lengthMenu = list(c(5, 10, 25, 50, 100, -1), 
+                                       c('5', '10', '25', '50', '100', 'All')),
                       scrollX = TRUE,
                       search = list(regex = FALSE, caseInsensitive = TRUE),
                       searchHighlight = TRUE,
-                      dom = 'Bfrtip',
+                      dom = 'Blfrtip',
                       language = list(
                         search = "Search tasks:",
-                        searchPlaceholder = "Enter search term..."
+                        searchPlaceholder = "Enter search term...",
+                        lengthMenu = "Show _MENU_ tasks per page"
+                      ),
+                      columnDefs = list(
+                        list(width = "50px", targets = 0),    # ID column - narrow
+                        list(width = "200px", targets = 1),   # Subject column - wider
+                        list(width = "120px", targets = 2),   # Category column
+                        list(width = "80px", targets = 3),    # Status column
+                        list(width = "120px", targets = 4),   # Created column
+                        list(width = "150px", targets = 5)    # Notes column
                       )
                     ),
                     rownames = FALSE)
@@ -319,8 +330,30 @@ server <- function(input, output, session) {
     }
   }, server = FALSE)
   
-  # Handle row selection for editing
+  # Handle row selection for editing (single click)
   observeEvent(input$edit_task_btn, {
+    if (length(input$tasks_table_rows_selected) == 0) {
+      showNotification("Please select a task to edit!", type = "warning")
+      return()
+    }
+    
+    show_edit_modal()
+  })
+  
+  # Handle double-click for editing
+  observeEvent(input$tasks_table_cell_clicked, {
+    if (!is.null(input$tasks_table_cell_clicked$row)) {
+      # Update the selected row
+      selectRows(proxy = dataTableProxy("tasks_table"), 
+                 selected = input$tasks_table_cell_clicked$row)
+      
+      # Show edit modal
+      show_edit_modal()
+    }
+  })
+  
+  # Function to show edit modal
+  show_edit_modal <- function() {
     if (length(input$tasks_table_rows_selected) == 0) {
       showNotification("Please select a task to edit!", type = "warning")
       return()
@@ -380,7 +413,7 @@ server <- function(input, output, session) {
         modalButton("Cancel")
       )
     ))
-  })
+  }
   
   # Task notes table
   output$task_notes_table <- DT::renderDataTable({
