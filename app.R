@@ -265,6 +265,9 @@ server <- function(input, output, session) {
   current_task_id <- reactiveVal(NULL)
   task_notes_data <- reactiveVal(data.frame())
   
+  # Create DataTable proxy for programmatic control
+  tasks_table_proxy <- dataTableProxy("tasks_table")
+  
   # Load tasks on startup
   observe({
     tryCatch({
@@ -344,7 +347,7 @@ server <- function(input, output, session) {
   observeEvent(input$tasks_table_cell_clicked, {
     if (!is.null(input$tasks_table_cell_clicked$row)) {
       # Update the selected row
-      selectRows(proxy = dataTableProxy("tasks_table"), 
+      selectRows(proxy = tasks_table_proxy, 
                  selected = input$tasks_table_cell_clicked$row)
       
       # Show edit modal
@@ -451,7 +454,7 @@ server <- function(input, output, session) {
       # Refresh tasks
       tasks_data(get_tasks())
       
-      showNotification("Task added successfully!", type = "success")
+      showNotification("Task added successfully!", type = "message")
     }, error = function(e) {
       showNotification(paste("Error adding task:", e$message), type = "error")
     })
@@ -472,7 +475,7 @@ server <- function(input, output, session) {
       notes <- get_task_notes(current_task_id())
       task_notes_data(notes)
       
-      showNotification("Note added successfully!", type = "success")
+      showNotification("Note added successfully!", type = "message")
     }, error = function(e) {
       showNotification(paste("Error adding note:", e$message), type = "error")
     })
@@ -493,7 +496,7 @@ server <- function(input, output, session) {
       tasks_data(get_tasks())
       
       removeModal()
-      showNotification("Task updated successfully!", type = "success")
+      showNotification("Task updated successfully!", type = "message")
     }, error = function(e) {
       showNotification(paste("Error updating task:", e$message), type = "error")
     })
@@ -521,7 +524,7 @@ server <- function(input, output, session) {
       tasks_data(get_tasks())
       
       removeModal()
-      showNotification("Task deleted successfully!", type = "success")
+      showNotification("Task deleted successfully!", type = "message")
     }, error = function(e) {
       showNotification(paste("Error deleting task:", e$message), type = "error")
     })
@@ -557,7 +560,7 @@ server <- function(input, output, session) {
             task_notes_data(notes)
             
             removeModal()
-            showNotification("Note deleted successfully!", type = "success")
+            showNotification("Note deleted successfully!", type = "message")
           }, error = function(e) {
             showNotification(paste("Error deleting note:", e$message), type = "error")
           })
