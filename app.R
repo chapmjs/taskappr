@@ -1,5 +1,6 @@
 # Simple Task App in R Shiny with MySQL Backend
 # File: app.R
+# version 38
 
 library(shiny)
 library(shinydashboard)
@@ -82,7 +83,7 @@ get_tasks <- function() {
     FROM tasks t
     LEFT JOIN task_notes n ON t.id = n.task_id
     GROUP BY t.id, t.subject, t.category, t.status, t.created_at, t.updated_at
-    ORDER BY t.created_at DESC
+    ORDER BY t.category ASC, t.created_at DESC
   "
   
   result <- dbGetQuery(conn, query)
@@ -309,6 +310,7 @@ server <- function(input, output, session) {
                       search = list(regex = FALSE, caseInsensitive = TRUE),
                       searchHighlight = TRUE,
                       dom = 'Blfrtip',
+                      order = list(list(2, 'asc'), list(4, 'desc')), # Category ASC, Created DESC
                       language = list(
                         search = "Search tasks:",
                         searchPlaceholder = "Enter search term...",
