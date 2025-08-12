@@ -66,7 +66,7 @@ get_tasks <- function() {
     SELECT t.id, t.subject, t.category, t.status, t.created_at, t.updated_at,
            GROUP_CONCAT(n.note SEPARATOR ' | ') as notes
     FROM tasks t
-    LEFT JOIN notes n ON t.id = n.task_id
+    LEFT JOIN task_notes n ON t.id = n.task_id
     GROUP BY t.id, t.subject, t.category, t.status, t.created_at, t.updated_at
     ORDER BY t.created_at DESC
   "
@@ -88,7 +88,7 @@ insert_task <- function(subject, category, status, note = NULL) {
   
   # Insert note if provided
   if (!is.null(note) && nchar(trimws(note)) > 0) {
-    note_query <- "INSERT INTO notes (task_id, note) VALUES (?, ?)"
+    note_query <- "INSERT INTO task_notes (task_id, note) VALUES (?, ?)"
     dbExecute(conn, note_query, params = list(task_id, note))
   }
   
@@ -108,7 +108,7 @@ delete_task <- function(id) {
   on.exit(dbDisconnect(conn))
   
   # Delete notes first (foreign key constraint)
-  dbExecute(conn, "DELETE FROM notes WHERE task_id = ?", params = list(id))
+  dbExecute(conn, "DELETE FROM task_notes WHERE task_id = ?", params = list(id))
   
   # Delete task
   dbExecute(conn, "DELETE FROM tasks WHERE id = ?", params = list(id))
@@ -118,7 +118,7 @@ get_task_notes <- function(task_id) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "SELECT id, note, created_at FROM notes WHERE task_id = ? ORDER BY created_at DESC"
+  query <- "SELECT id, note, created_at FROM task_notes WHERE task_id = ? ORDER BY created_at DESC"
   result <- dbGetQuery(conn, query, params = list(task_id))
   return(result)
 }
@@ -127,7 +127,7 @@ add_note <- function(task_id, note) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "INSERT INTO notes (task_id, note) VALUES (?, ?)"
+  query <- "INSERT INTO task_notes (task_id, note) VALUES (?, ?)"
   dbExecute(conn, query, params = list(task_id, note))
 }
 
@@ -135,7 +135,7 @@ delete_note <- function(note_id) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- "DELETE FROM notes WHERE id = ?"
+  query <- "DELETE FROM task_notes WHERE id = ?"
   dbExecute(conn, query, params = list(note_id))
 }
 
