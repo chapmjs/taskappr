@@ -10,11 +10,18 @@ library(shinyWidgets)
 library(lubridate)
 
 # Database configuration
-# Try to get from environment variables first, then fall back to defaults
+# Get environment variables with fallback logic
 DB_HOST <- Sys.getenv("DB_HOST")
+if (DB_HOST == "") DB_HOST <- "mexico.bbfarm.org"
+
 DB_NAME <- Sys.getenv("DB_NAME")
-DB_USER <- Sys.getenv("DB_USER")  # Replace with your MySQL username
-DB_PASS <- Sys.getenv("DB_PASS")  # Replace with your MySQL password
+if (DB_NAME == "") DB_NAME <- "chapmjs_taskappdb"
+
+DB_USER <- Sys.getenv("DB_USER")
+if (DB_USER == "") DB_USER <- "your_username"  # Replace with your MySQL username
+
+DB_PASS <- Sys.getenv("DB_PASS")
+if (DB_PASS == "") DB_PASS <- "your_password"  # Replace with your MySQL password
 
 # Check if credentials are still default values
 if (DB_USER == "your_username" || DB_PASS == "your_password") {
