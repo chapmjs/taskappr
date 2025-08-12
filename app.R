@@ -9,12 +9,6 @@ library(DBI)
 library(shinyWidgets)
 library(lubridate)
 
-# Database configuration
-DB_HOST <- "mexico.bbfarm.org"
-DB_NAME <- "chapmjs_taskappdb"
-DB_USER <- "your_username"  # Replace with your MySQL username
-DB_PASS <- "your_password"  # Replace with your MySQL password
-
 # Category mapping
 CATEGORIES <- c(
   "1 - Relationship with God" = 1,
