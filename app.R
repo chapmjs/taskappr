@@ -56,6 +56,10 @@ get_db_connection <- function() {
                       user = DB_USER,
                       password = DB_PASS)
     
+    # Set connection options to handle character encoding and data types
+    dbExecute(conn, "SET NAMES utf8mb4")
+    dbExecute(conn, "SET CHARACTER SET utf8mb4")
+    
     cat("Database connection successful!\n")
     return(conn)
   }, error = function(e) {
@@ -70,7 +74,9 @@ get_tasks <- function() {
   on.exit(dbDisconnect(conn))
   
   query <- "
-    SELECT t.id, t.subject, t.category, t.status, t.created_at, t.updated_at,
+    SELECT t.id, t.subject, t.category, t.status, 
+           DATE_FORMAT(t.created_at, '%Y-%m-%d %H:%i:%s') as created_at,
+           DATE_FORMAT(t.updated_at, '%Y-%m-%d %H:%i:%s') as updated_at,
            GROUP_CONCAT(n.note SEPARATOR ' | ') as notes
     FROM tasks t
     LEFT JOIN task_notes n ON t.id = n.task_id
@@ -79,6 +85,13 @@ get_tasks <- function() {
   "
   
   result <- dbGetQuery(conn, query)
+  
+  # Convert character dates back to POSIXct if needed
+  if (nrow(result) > 0) {
+    result$created_at <- as.POSIXct(result$created_at, format = "%Y-%m-%d %H:%M:%S")
+    result$updated_at <- as.POSIXct(result$updated_at, format = "%Y-%m-%d %H:%M:%S")
+  }
+  
   return(result)
 }
 
@@ -136,8 +149,14 @@ get_task_notes <- function(task_id) {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  query <- paste0("SELECT id, note, created_at FROM task_notes WHERE task_id = ", task_id, " ORDER BY created_at DESC")
+  query <- paste0("SELECT id, note, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at FROM task_notes WHERE task_id = ", task_id, " ORDER BY created_at DESC")
   result <- dbGetQuery(conn, query)
+  
+  # Convert character dates back to POSIXct if needed
+  if (nrow(result) > 0) {
+    result$created_at <- as.POSIXct(result$created_at, format = "%Y-%m-%d %H:%M:%S")
+  }
+  
   return(result)
 }
 
