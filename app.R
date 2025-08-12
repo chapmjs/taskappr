@@ -345,7 +345,7 @@ server <- function(input, output, session) {
                       ),
                       columnDefs = list(
                         list(width = "50px", targets = 0),    # ID column - narrow
-                        list(width = "200px", targets = 1),   # Subject column - wider
+                        list(width = "300px", targets = 1),   # Subject column - wider
                         list(width = "120px", targets = 2),   # Category column
                         list(width = "80px", targets = 3),    # Status column
                         list(width = "120px", targets = 4),   # Created column
