@@ -315,12 +315,12 @@ server <- function(input, output, session) {
       df$created_at <- format(as.POSIXct(df$created_at), "%Y-%m-%d %H:%M")
       
       # Truncate text fields to 25 characters
-      df$subject_display <- ifelse(nchar(df$subject) > 25, 
-                                   paste0(substr(df$subject, 1, 25), "..."), 
+      df$subject_display <- ifelse(nchar(df$subject) > 35, 
+                                   paste0(substr(df$subject, 1, 35), "..."), 
                                    df$subject)
       
-      df$notes_display <- ifelse(!is.na(df$notes) & nchar(df$notes) > 25, 
-                                 paste0(substr(df$notes, 1, 25), "..."), 
+      df$notes_display <- ifelse(!is.na(df$notes) & nchar(df$notes) > 30, 
+                                 paste0(substr(df$notes, 1, 35), "..."), 
                                  ifelse(is.na(df$notes), "", df$notes))
       
       display_df <- df[, c("id", "subject_display", "category_name", "status", "created_at", "notes_display")]
