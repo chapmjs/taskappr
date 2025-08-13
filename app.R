@@ -1,4 +1,3 @@
-# v47 
 # Simple Task App in R Shiny with MySQL Backend
 # File: app.R
 
@@ -190,7 +189,7 @@ delete_note <- function(note_id) {
 
 # UI
 ui <- dashboardPage(
-  dashboardHeader(title = "Simple Task Manager"),
+  dashboardHeader(title = "Task App"),
   
   dashboardSidebar(
     collapsed = TRUE,  # Start with sidebar collapsed
@@ -331,7 +330,7 @@ server <- function(input, output, session) {
                     selection = "single",
                     filter = "top",
                     options = list(
-                      pageLength = 10, 
+                      pageLength = 25, 
                       lengthMenu = list(c(5, 10, 25, 50, 100, -1), 
                                        c('5', '10', '25', '50', '100', 'All')),
                       scrollX = TRUE,
