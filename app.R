@@ -70,15 +70,25 @@ get_db_connection <- function() {
 }
 
 # CRUD Functions
-get_tasks <- function(status_filter = "Open") {
+get_tasks <- function(status_filter = "Open", category_filter = "All") {
   conn <- get_db_connection()
   on.exit(dbDisconnect(conn))
   
-  # Build the WHERE clause based on filter
-  where_clause <- if (status_filter == "All") {
-    ""
+  # Build the WHERE clause based on filters
+  where_conditions <- c()
+  
+  if (status_filter != "All") {
+    where_conditions <- c(where_conditions, paste0("t.status = '", status_filter, "'"))
+  }
+  
+  if (category_filter != "All") {
+    where_conditions <- c(where_conditions, paste0("t.category = ", category_filter))
+  }
+  
+  where_clause <- if (length(where_conditions) > 0) {
+    paste("WHERE", paste(where_conditions, collapse = " AND "))
   } else {
-    paste0("WHERE t.status = '", status_filter, "'")
+    ""
   }
   
   query <- paste0("
